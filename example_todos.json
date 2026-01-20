@@ -1,0 +1,74 @@
+[
+    {
+      "id": 1,
+      "title": "Complete FastAPI project",
+      "description": "Finish implementing all endpoints and add proper error handling",
+      "priority": 5,
+      "complete": false
+    },
+    {
+      "id": 2,
+      "title": "Review code documentation",
+      "description": "Go through all API documentation and ensure it's up to date",
+      "priority": 3,
+      "complete": false
+    },
+    {
+      "id": 3,
+      "title": "Write unit tests",
+      "description": "Add comprehensive test coverage for all endpoints",
+      "priority": 4,
+      "complete": true
+    },
+    {
+      "id": 4,
+      "title": "Set up CI/CD pipeline",
+      "description": "Configure GitHub Actions for automated testing and deployment",
+      "priority": 4,
+      "complete": false
+    },
+    {
+      "id": 5,
+      "title": "Optimize database queries",
+      "description": "Review and optimize slow database queries using indexes",
+      "priority": 2,
+      "complete": false
+    },
+    {
+      "id": 6,
+      "title": "Add pagination to list endpoints",
+      "description": "Implement pagination for todos list to handle large datasets",
+      "priority": 3,
+      "complete": false
+    },
+    {
+      "id": 7,
+      "title": "Implement search functionality",
+      "description": "Add search and filter capabilities for todos",
+      "priority": 2,
+      "complete": false
+    },
+    {
+      "id": 8,
+      "title": "Update dependencies",
+      "description": "Check for security updates and update all packages",
+      "priority": 1,
+      "complete": true
+    },
+    {
+      "id": 9,
+      "title": "Add request validation",
+      "description": "Implement comprehensive input validation for all endpoints",
+      "priority": 4,
+      "complete": false
+    },
+    {
+      "id": 10,
+      "title": "Deploy to production",
+      "description": "Set up production environment and deploy the application",
+      "priority": 5,
+      "complete": false
+    }
+  ]
+  
+  
