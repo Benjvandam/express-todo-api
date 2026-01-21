@@ -2,6 +2,7 @@ import { error } from 'console';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import pool from '../config/db.js';
 
 // Get the directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -14,8 +15,14 @@ let todos = JSON.parse(todosData);
 
 // @desc Get all todos
 // @route GET /api/todos
-export const getTodos = (req, res) => {
-    return res.status(200).json(todos)
+export const getTodos = async(req, res, next) => {
+    try {
+        const result = await pool.query('SELECT * FROM todos ORDER BY id');
+
+        return res.status(200).json(result.rows);
+    } catch (error) {
+        return next(error);
+    }
 } 
 
 // @desc Get single todo
@@ -36,8 +43,11 @@ export const getTodo = (req, res, next) => {
 
 // @desc Create a todo
 // Route Create /api/todos
-
-export const createTodo = (req, res, next) => {
+export const createTodo = async (req, res, next) => {
+    // Debug
+    console.log('req.body:', req.body);
+    console.log('req.headers:', req.headers['content-type']);
+    
     // Validate required fields
     if (!req.body.title || req.body.title.trim() === '') {
         const error = new Error('Title of your todo is missing');
@@ -45,16 +55,24 @@ export const createTodo = (req, res, next) => {
         return next(error);
     }
 
-    const newTodo = {
-        id: todos.length + 1,
-        title: req.body.title,
-        description: req.body.description || '',
-        priority: req.body.priority || 1,
-        complete: req.body.complete || false
+    try {
+        const query = `
+            INSERT INTO todos (title, description, priority, complete)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+        `
+        const values = [
+            req.body.title,
+            req.body.description || '',
+            req.body.priority || 1,
+            req.body.complete || false
+        ];
+    
+        const result = await pool.query(query, values);
+        return res.status(201).json(result.rows[0]);
+    } catch (error) {
+        return next(error);
     }
-
-    todos.push(newTodo);
-    res.status(201).json(newTodo);
 }
 
 // @desc Update a todo

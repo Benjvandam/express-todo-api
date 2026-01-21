@@ -4,6 +4,10 @@ import { fileURLToPath} from 'url';
 import todos from './routes/todos.js'
 import notFound from './middleware/notFound.js'
 import errorHandler from './middleware/error.js'
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
