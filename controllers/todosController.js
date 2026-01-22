@@ -27,18 +27,28 @@ export const getTodos = async(req, res, next) => {
 
 // @desc Get single todo
 // @route GET /api/todo/:id
-export const getTodo = (req, res, next) => {
-    const id = parseInt(req.params.id);
-    const todo = todos.find((todo) => todo.id === id );
+export const getTodo = async (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id);
 
-    if (!todo) {
-        const error = new Error(`Could not find todo with id ${id}`);
-        error.status = 404;
+        const query = `
+            SELECT * FROM todos WHERE id = $1
+        `;
+
+        const values = [id];
+        const result = await pool.query(query, values);
+
+        if (result.rows.length === 0) {
+            const error = new Error(`Could not find todo with id ${id}`);
+            error.status = 404;
+            return next(error);
+        }
+        
+        return res.status(200).json(result.rows[0])
+        
+    } catch (error) {
         return next(error);
     }
-
-    res.status(200).json(todo);
-
 }
 
 // @desc Create a todo
@@ -47,7 +57,7 @@ export const createTodo = async (req, res, next) => {
     // Debug
     console.log('req.body:', req.body);
     console.log('req.headers:', req.headers['content-type']);
-    
+
     // Validate required fields
     if (!req.body.title || req.body.title.trim() === '') {
         const error = new Error('Title of your todo is missing');
@@ -77,44 +87,78 @@ export const createTodo = async (req, res, next) => {
 
 // @desc Update a todo
 // Route PUT /api/todo/:id
-export const updateTodo = (req, res, next) => {
-    const id = parseInt(req.params.id)
-    if (!id || isNaN(id)) {
-        const error = new Error('ID of the todo is missing');
-        error.status = 400;
-        return next(error);
-    }
+export const updateTodo = async (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id)
+        if (!id || isNaN(id)) {
+            const error = new Error('ID of the todo is missing');
+            error.status = 400;
+            return next(error);
+        }
 
-    const todoIndex = todos.findIndex((todo) => todo.id === id);
-    if (todoIndex === -1) {
-        const error = new Error(`Todo with ID ${id} could not be found`)
-        error.status = 404
+        const query = `
+        UPDATE todos
+        SET
+            title = COALESCE($1, title),
+            description = COALESCE($2, description),
+            priority = COALESCE($3, priority),
+            complete = COALESCE($4, complete),
+            updated_at = NOW()
+        WHERE id = $5
+        RETURNING *        
+    `
+
+        const values = [
+            req.body.title || null,
+            req.body.description || null,
+            req.body.priority || null,
+            req.body.complete ?? null,
+            id
+        ]
+
+        const result = await pool.query(query, values)
+
+        if (result.rows.length === 0)  {
+            const error = new Error(`Could not find todo with id ${id}`)
+            error.status = 404;
+            return next(error)
+        };
+
+        return res.status(200).json(result.rows[0])
+    } catch (error) {
         return next(error)
     }
-
-    const newTodo = {
-        id,
-        title: req.body.title != undefined ? req.body.title : todos[todoIndex].title,
-        description: req.body.description != undefined ? req.body.description : todos[todoIndex].description,
-        priority: req.body.priority != undefined ? req.body.priority : todos[todoIndex].priority,
-        complete: req.body.complete != undefined ? req.body.complete : todos[todoIndex].complete
-    }
-
-    todos[todoIndex] = newTodo
-
-    res.status(201).json(newTodo)
 } 
 
 // @desc Delete a todo
 // Route DELETE /api/todo/:id
-export const deleteTodo = (req, res, next) => {
-    const id = parseInt(req.params.id);
-    if (!id || isNaN(id)) {
-        error = new Error('Could not find the todo')
-        error.status = 404
-        next(error)
+export const deleteTodo = async (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (!id || isNaN(id)) {
+            const error = new Error('ID of the todo is missing');
+            error.status = 400;
+            return next(error);
+        }
+    
+        const query = `
+            DELETE FROM todos
+            WHERE id = $1
+            RETURNING *
+        `
+    
+        const values = [id];
+    
+        const result = await pool.query(query, values);
+    
+        if (result.rows.length === 0) {
+            const error = new Error(`Could not find todo with id ${id}`);
+            error.status = 404;
+            return next(error);
+        }
+    
+        return res.status(200).json(result.rows[0]);
+    } catch (error) {
+        return next(error);
     }
-
-    todos = todos.filter((todo) => todo.id != id)
-    res.status(201).json(todos)
 }
