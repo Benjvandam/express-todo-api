@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pool from '../config/db.js';
-import prisma from '../config/prisma.js';
+import { PrismaClient } from '@prisma/client';
 
 // Get the directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -18,7 +18,7 @@ let todos = JSON.parse(todosData);
 // @route GET /api/todos
 export const getTodos = async (req, res, next) => {
     try {
-        const todos = await prisma.todos.findMany({
+        const todos = await PrismaClient.todos.findMany({
             orderBy: {
                 id: 'asc'
             }
