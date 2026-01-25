@@ -1,9 +1,10 @@
-import { error } from 'console';
+import { Request, Response, NextFunction } from 'express';
+import { HttpError } from '../types/index.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pool from '../config/db.js';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/prisma.js'
 
 // Get the directory name for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -16,9 +17,9 @@ let todos = JSON.parse(todosData);
 
 // @desc Get all todos
 // @route GET /api/todos
-export const getTodos = async (req, res, next) => {
+export const getTodos = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const todos = await PrismaClient.todos.findMany({
+        const todos = await prisma.todos.findMany({
             orderBy: {
                 id: 'asc'
             }
@@ -31,9 +32,9 @@ export const getTodos = async (req, res, next) => {
 
 // @desc Get single todo
 // @route GET /api/todo/:id
-export const getTodo = async (req, res, next) => {
+export const getTodo = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id = parseInt(req.params.id);
+        const id = parseInt(String(req.params.id));
 
         const query = `
             SELECT * FROM todos WHERE id = $1
@@ -43,7 +44,7 @@ export const getTodo = async (req, res, next) => {
         const result = await pool.query(query, values);
 
         if (result.rows.length === 0) {
-            const error = new Error(`Could not find todo with id ${id}`);
+            const error: HttpError = new Error(`Could not find todo with id ${id}`);
             error.status = 404;
             return next(error);
         }
@@ -57,14 +58,14 @@ export const getTodo = async (req, res, next) => {
 
 // @desc Create a todo
 // Route Create /api/todos
-export const createTodo = async (req, res, next) => {
+export const createTodo = async (req: Request, res: Response, next: NextFunction) => {
     // Debug
     console.log('req.body:', req.body);
     console.log('req.headers:', req.headers['content-type']);
 
     // Validate required fields
     if (!req.body.title || req.body.title.trim() === '') {
-        const error = new Error('Title of your todo is missing');
+        const error: HttpError = new Error('Title of your todo is missing');
         error.status = 400;
         return next(error);
     }
@@ -91,11 +92,11 @@ export const createTodo = async (req, res, next) => {
 
 // @desc Update a todo
 // Route PUT /api/todo/:id
-export const updateTodo = async (req, res, next) => {
+export const updateTodo = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id = parseInt(req.params.id)
+        const id = parseInt(String(req.params.id))
         if (!id || isNaN(id)) {
-            const error = new Error('ID of the todo is missing');
+            const error: HttpError = new Error('ID of the todo is missing');
             error.status = 400;
             return next(error);
         }
@@ -123,7 +124,7 @@ export const updateTodo = async (req, res, next) => {
         const result = await pool.query(query, values)
 
         if (result.rows.length === 0)  {
-            const error = new Error(`Could not find todo with id ${id}`)
+            const error: HttpError = new Error(`Could not find todo with id ${id}`)
             error.status = 404;
             return next(error)
         };
@@ -136,11 +137,11 @@ export const updateTodo = async (req, res, next) => {
 
 // @desc Delete a todo
 // Route DELETE /api/todo/:id
-export const deleteTodo = async (req, res, next) => {
+export const deleteTodo = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const id = parseInt(req.params.id);
+        const id = parseInt(String(req.params.id));
         if (!id || isNaN(id)) {
-            const error = new Error('ID of the todo is missing');
+            const error: HttpError = new Error('ID of the todo is missing');
             error.status = 400;
             return next(error);
         }
@@ -156,7 +157,7 @@ export const deleteTodo = async (req, res, next) => {
         const result = await pool.query(query, values);
     
         if (result.rows.length === 0) {
-            const error = new Error(`Could not find todo with id ${id}`);
+            const error: HttpError = new Error(`Could not find todo with id ${id}`);
             error.status = 404;
             return next(error);
         }

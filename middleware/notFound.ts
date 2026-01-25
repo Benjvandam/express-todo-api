@@ -1,8 +1,8 @@
-import { Request, Response, NextFunciton } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { HttpError } from '../types/index.js';
 
 const notFound = (req: Request, res: Response, next: NextFunction) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
+  const error: HttpError = new Error(`Not Found - ${req.originalUrl}`);
   error.status = 404;
   next(error);
 }
