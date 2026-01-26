@@ -36,20 +36,17 @@ export const getTodo = async (req: Request, res: Response, next: NextFunction) =
     try {
         const id = parseInt(String(req.params.id));
 
-        const query = `
-            SELECT * FROM todos WHERE id = $1
-        `;
+        const todo = await prisma.todos.findFirst({
+            where: { id }
+        })
 
-        const values = [id];
-        const result = await pool.query(query, values);
-
-        if (result.rows.length === 0) {
-            const error: HttpError = new Error(`Could not find todo with id ${id}`);
-            error.status = 404;
+        if (!todo ) {
+            const error: HttpError = new Error(`Could not find todo with is ${id}`)
+            error.status = 404
             return next(error);
         }
-        
-        return res.status(200).json(result.rows[0])
+
+        return res.status(200).json(todo)
         
     } catch (error) {
         return next(error);
