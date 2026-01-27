@@ -56,9 +56,6 @@ export const getTodo = async (req: Request, res: Response, next: NextFunction) =
 // @desc Create a todo
 // Route Create /api/todos
 export const createTodo = async (req: Request, res: Response, next: NextFunction) => {
-    // Debug
-    console.log('req.body:', req.body);
-    console.log('req.headers:', req.headers['content-type']);
 
     // Validate required fields
     if (!req.body.title || req.body.title.trim() === '') {
@@ -68,20 +65,17 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
     }
 
     try {
-        const query = `
-            INSERT INTO todos (title, description, priority, complete)
-            VALUES ($1, $2, $3, $4)
-            RETURNING *
-        `
-        const values = [
-            req.body.title,
-            req.body.description || '',
-            req.body.priority || 1,
-            req.body.complete || false
-        ];
-    
-        const result = await pool.query(query, values);
-        return res.status(201).json(result.rows[0]);
+
+        const todo = await prisma.todos.create({
+            data: {
+                title: req.body.title,
+                description: req.body.description || "",
+                priority: req.body.priority || 1,
+                complete: req.body.complete || false
+            }
+        });
+
+        return res.status(201).json(todo);
     } catch (error) {
         return next(error);
     }
@@ -98,36 +92,27 @@ export const updateTodo = async (req: Request, res: Response, next: NextFunction
             return next(error);
         }
 
-        const query = `
-        UPDATE todos
-        SET
-            title = COALESCE($1, title),
-            description = COALESCE($2, description),
-            priority = COALESCE($3, priority),
-            complete = COALESCE($4, complete),
-            updated_at = NOW()
-        WHERE id = $5
-        RETURNING *        
-    `
+        const todo = await prisma.todos.update({
+            where: {
+                id
+            },
+            data: {
+                title: req.body.title,
+                description: req.body.description,
+                priority: req.body.priority,
+                complete: req.body.complete
+            }
+        });
 
-        const values = [
-            req.body.title || null,
-            req.body.description || null,
-            req.body.priority || null,
-            req.body.complete ?? null,
-            id
-        ]
+        return res.status(200).json(todo)
 
-        const result = await pool.query(query, values)
-
-        if (result.rows.length === 0)  {
-            const error: HttpError = new Error(`Could not find todo with id ${id}`)
-            error.status = 404;
-            return next(error)
-        };
-
-        return res.status(200).json(result.rows[0])
-    } catch (error) {
+    } catch (error: any) {
+        if (error.code === 'P2025') {
+            const httpError: HttpError = new Error(`Could not find todo with id`)
+            httpError.status = 404;
+            return next(httpError);
+        }
+        
         return next(error)
     }
 } 
@@ -143,24 +128,20 @@ export const deleteTodo = async (req: Request, res: Response, next: NextFunction
             return next(error);
         }
     
-        const query = `
-            DELETE FROM todos
-            WHERE id = $1
-            RETURNING *
-        `
-    
-        const values = [id];
-    
-        const result = await pool.query(query, values);
-    
-        if (result.rows.length === 0) {
-            const error: HttpError = new Error(`Could not find todo with id ${id}`);
-            error.status = 404;
-            return next(error);
+        const todo = await prisma.todos.delete({
+            where: {
+                id
+            }
+        })
+
+        return res.status(200).json(todo);
+
+    } catch (error: any) {
+        if (error.code === 'P2025') {
+            const httpError: HttpError = new Error('Could not find todo')
+            httpError.status = 404;
+            return next(httpError)
         }
-    
-        return res.status(200).json(result.rows[0]);
-    } catch (error) {
         return next(error);
     }
 }
