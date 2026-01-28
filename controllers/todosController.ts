@@ -19,7 +19,7 @@ let todos = JSON.parse(todosData);
 // @route GET /api/todos
 export const getTodos = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const todos = await prisma.todos.findMany({
+        const todos = await prisma.todo.findMany({
             orderBy: {
                 id: 'asc'
             }
@@ -36,7 +36,7 @@ export const getTodo = async (req: Request, res: Response, next: NextFunction) =
     try {
         const id = parseInt(String(req.params.id));
 
-        const todo = await prisma.todos.findFirst({
+        const todo = await prisma.todo.findFirst({
             where: { id }
         })
 
@@ -66,7 +66,7 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
 
     try {
 
-        const todo = await prisma.todos.create({
+        const todo = await prisma.todo.create({
             data: {
                 title: req.body.title,
                 description: req.body.description || "",
@@ -92,7 +92,7 @@ export const updateTodo = async (req: Request, res: Response, next: NextFunction
             return next(error);
         }
 
-        const todo = await prisma.todos.update({
+        const todo = await prisma.todo.update({
             where: {
                 id
             },
@@ -128,7 +128,7 @@ export const deleteTodo = async (req: Request, res: Response, next: NextFunction
             return next(error);
         }
     
-        const todo = await prisma.todos.delete({
+        const todo = await prisma.todo.delete({
             where: {
                 id
             }
@@ -138,7 +138,7 @@ export const deleteTodo = async (req: Request, res: Response, next: NextFunction
 
     } catch (error: any) {
         if (error.code === 'P2025') {
-            const httpError: HttpError = new Error('Could not find todo')
+            const httpError: HttpError = new Error('Could not find todo with id')
             httpError.status = 404;
             return next(httpError)
         }

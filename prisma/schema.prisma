@@ -7,7 +7,7 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-model todos {
+model Todo {
   id          Int       @id @default(autoincrement())
   title       String    @db.VarChar(255)
   description String?   @default("")
